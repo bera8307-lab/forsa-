@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Forsa — Find your job</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<script>
+  if (!localStorage.getItem("places_finder_token")) {
+    window.location.replace("login.html");
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.min.css">
+<link rel="stylesheet" href="style.css?v=16">
+</head>
+<body>
+  <div class="glow glow-cyan" aria-hidden="true"></div>
+  <div class="glow glow-violet" aria-hidden="true"></div>
+
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="forsa-icon.png" alt="" class="brand-logo" width="40" height="40">
+        <span class="brand-text"><span class="brand-name">Forsa</span><span class="brand-tag" data-i18n="brand_tag">Find your job</span></span>
+      </div>
+
+      <div class="side-label" data-i18n="side_menu">Menu</div>
+      <nav class="side-nav" aria-label="Navigation principale">
+        <button type="button" class="side-item active" data-page="home"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v9a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1v-9"/></svg><span data-i18n="nav_home">Accueil</span></button>
+        <button type="button" class="side-item" data-page="dashboard"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></svg><span data-i18n="nav_dashboard">Tableau de bord</span></button>
+        <button type="button" class="side-item" data-page="favorites"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.2 5.9-.8L12 3.5Z"/></svg><span data-i18n="nav_favorites">Favoris</span><span class="side-badge" id="fav-count">0</span></button>
+        <button type="button" class="side-item" data-page="history"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4.5h4.5"/><path d="M12 7.5V12l3 2"/></svg><span data-i18n="nav_history">Historique</span><span class="side-badge" id="applications-count">0</span></button>
+      </nav>
+
+      <div class="side-label" data-i18n="side_general">Général</div>
+      <nav class="side-nav" aria-label="Général">
+        <button type="button" class="side-item" data-page="settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg><span data-i18n="nav_settings">Paramètres</span></button>
+        <button type="button" class="side-item" data-page="chatbot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.6A8 8 0 1 1 21 12Z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01"/></svg><span data-i18n="nav_chatbot">Chatbot</span></button>
+        <button type="button" class="side-item" id="menu-tutorial-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8"/><path d="M12 17.2h.01"/></svg><span data-i18n="nav_tutorial">Tutoriel</span></button>
+        <button type="button" class="side-item side-item-danger" id="menu-logout-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span data-i18n="menu_logout">Se déconnecter</span></button>
+      </nav>
+    </aside>
+    <div class="side-backdrop" id="side-backdrop" hidden></div>
+
+  <div class="shell">
+    <nav class="nav">
+      <button type="button" class="nav-burger" id="nav-burger" aria-label="Menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+
+      <button type="button" class="side-toggle" id="side-toggle" aria-controls="sidebar" aria-expanded="true" aria-label="Réduire le menu" title="Réduire le menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/><path class="st-chev" d="m16 9-3 3 3 3"/></svg>
+      </button>
+
+      <div class="nav-search" id="nav-search">
+        <svg class="nav-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="company-search" type="text" data-i18n-placeholder="search_placeholder" placeholder="Rechercher une entreprise dans les résultats…" autocomplete="off" aria-label="Rechercher une entreprise">
+        <button type="button" id="clear-search" hidden aria-label="Effacer la recherche">&times;</button>
+      </div>
+
+      <div class="nav-right">
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          <span id="api-status" data-i18n="api_status">API connectée</span>
+        </div>
+
+        <button type="button" id="tutorial-btn" class="tutorial-btn" aria-haspopup="dialog">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.8"/><path d="M12 17.2h.01"/></svg>
+          <span class="tutorial-label" data-i18n="nav_tutorial">Tutoriel</span>
+          <i class="tutorial-dot" id="tutorial-dot" aria-hidden="true" hidden></i>
+        </button>
+
+        <button type="button" id="cv-nav-btn" class="cv-nav-btn" title="Mon CV">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+          <span data-i18n="nav_cv">Mon CV</span>
+          <span class="cv-status-dot" id="cv-status-dot" hidden></span>
+        </button>
+
+        <button type="button" id="profile-chip" class="profile-chip" aria-label="Profil">
+          <span class="avatar" id="avatar-initials">?</span>
+          <span class="profile-chip-text">
+            <span class="profile-chip-name" id="topbar-user-name">—</span>
+            <span class="profile-chip-email" id="topbar-user-email"></span>
+          </span>
+        </button>
+      </div>
+    </nav>
+
+    <section id="settings-modal" class="page view-page" hidden>
+      <div class="modal modal-settings" role="region" aria-labelledby="settings-heading">
+        <div class="modal-head">
+          <h2 id="settings-heading" data-i18n="settings_title">Paramètres</h2>
+          <button type="button" class="modal-close" data-close aria-label="Fermer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+        </div>
+
+        <section class="setting-block">
+          <div class="setting-text">
+            <h3 data-i18n="menu_theme">Thème</h3>
+            <p data-i18n="settings_theme_desc">Choisis l'affichage qui te convient le mieux.</p>
+          </div>
+          <div class="theme-choices" role="radiogroup" aria-label="Thème">
+            <button type="button" class="theme-choice" data-theme-choice="light" role="radio" aria-checked="false">
+              <span class="theme-preview theme-preview-light" aria-hidden="true">
+                <span class="tp-side"></span>
+                <span class="tp-main"><i></i><i></i><i class="short"></i></span>
+              </span>
+              <span data-i18n="theme_light">Clair</span>
+            </button>
+            <button type="button" class="theme-choice" data-theme-choice="dark" role="radio" aria-checked="false">
+              <span class="theme-preview theme-preview-dark" aria-hidden="true">
+                <span class="tp-side"></span>
+                <span class="tp-main"><i></i><i></i><i class="short"></i></span>
+              </span>
+              <span data-i18n="theme_dark">Sombre</span>
+            </button>
+          </div>
+        </section>
+
+        <section class="setting-block">
+          <div class="setting-text">
+            <h3 data-i18n="menu_language">Langue de l'interface</h3>
+            <p data-i18n="settings_language_desc">Pour les menus, les boutons et les messages.</p>
+          </div>
+          <div class="lang-toggle" id="lang-toggle" role="radiogroup" aria-label="Langue">
+            <button type="button" class="lang-btn" data-lang="fr" role="radio">Français</button>
+            <button type="button" class="lang-btn" data-lang="en" role="radio">English</button>
+          </div>
+        </section>
+
+        <!-- 1. Compte & Profil -->
+        <section class="setting-block set-card set-wide" aria-labelledby="set-account-h">
+          <div class="set-head">
+            <span class="set-ico" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>
+            <div class="setting-text"><h3 id="set-account-h">Compte &amp; Profil</h3><p>Tes informations personnelles et ta sécurité.</p></div>
+          </div>
+
+          <div class="set-avatar-row">
+            <span class="avatar avatar-xl" id="settings-avatar-preview">?</span>
+            <div class="set-avatar-actions">
+              <input type="file" id="settings-avatar-input" accept="image/png,image/jpeg,image/webp" hidden>
+              <button type="button" class="set-btn" id="settings-avatar-btn">Changer la photo</button>
+              <button type="button" class="set-btn set-btn-ghost" id="settings-avatar-remove">Retirer</button>
+              <small class="set-hint">PNG, JPG ou WebP · 2&nbsp;Mo max</small>
+            </div>
+          </div>
+
+          <div class="set-grid">
+            <div class="set-field">
+              <label for="settings-fullname">Nom complet</label>
+              <input id="settings-fullname" type="text" autocomplete="name" maxlength="80">
+            </div>
+            <div class="set-field">
+              <label for="settings-email">Email</label>
+              <input id="settings-email" type="email" autocomplete="email" maxlength="120">
+            </div>
+          </div>
+
+          <div class="set-actions">
+            <button type="button" class="set-btn" id="settings-password-open">Changer le mot de passe</button>
+            <button type="button" class="set-btn set-btn-primary" id="settings-account-save">Enregistrer</button>
+          </div>
+        </section>
+
+        <!-- 2. Préférences de Recherche -->
+        <section class="setting-block set-card" aria-labelledby="set-search-h">
+          <div class="set-head">
+            <span class="set-ico" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></span>
+            <div class="setting-text"><h3 id="set-search-h">Préférences de recherche</h3><p>Valeurs appliquées par défaut à chaque recherche.</p></div>
+          </div>
+
+          <div class="set-field">
+            <label for="settings-city">Ville / localisation par défaut</label>
+            <input id="settings-city" type="text" placeholder="Ex. Marrakech, Maroc" autocomplete="address-level2">
+          </div>
+
+          <div class="set-field">
+            <div class="set-label-row">
+              <label for="settings-radius">Rayon de recherche</label>
+              <output class="set-value" id="settings-radius-out" for="settings-radius">20 km</output>
+            </div>
+            <input id="settings-radius" class="set-range" type="range" min="5" max="50" step="1" value="20" style="--fill:33%">
+            <div class="set-range-scale" aria-hidden="true"><span>5 km</span><span>50 km</span></div>
+          </div>
+
+          <div class="set-field">
+            <label for="settings-max-results">Résultats max par mot-clé</label>
+            <select id="settings-max-results">
+              <option value="10">10</option>
+              <option value="20" selected>20</option>
+              <option value="40">40</option>
+              <option value="60">60</option>
+            </select>
+          </div>
+
+          <div class="set-actions">
+            <button type="button" class="set-btn set-btn-primary" id="settings-search-save">Enregistrer</button>
+          </div>
+        </section>
+
+        <!-- 3. Candidatures & CV -->
+        <section class="setting-block set-card" aria-labelledby="set-apps-h">
+          <div class="set-head">
+            <span class="set-ico" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>
+            <div class="setting-text"><h3 id="set-apps-h">Candidatures &amp; CV</h3><p>Ton CV joint et le modèle d'email par défaut.</p></div>
+          </div>
+
+          <div class="set-cv">
+            <span class="set-cv-ico" aria-hidden="true">PDF</span>
+            <div class="set-cv-info">
+              <strong id="settings-cv-name">Aucun CV joint</strong>
+              <span class="set-badge" id="settings-cv-status" data-state="empty">Manquant</span>
+            </div>
+            <input type="file" id="settings-cv-input" accept=".pdf,.doc,.docx" hidden>
+            <div class="set-cv-actions">
+              <button type="button" class="set-btn" id="settings-cv-view" disabled>Voir</button>
+              <button type="button" class="set-btn" id="settings-cv-replace">Remplacer</button>
+            </div>
+          </div>
+
+          <div class="set-field">
+            <label for="settings-tpl-subject">Objet de l'email</label>
+            <input id="settings-tpl-subject" type="text" placeholder="Candidature – {poste}" maxlength="140">
+          </div>
+          <div class="set-field">
+            <label for="settings-tpl-body">Message</label>
+            <textarea id="settings-tpl-body" rows="6" placeholder="Bonjour,&#10;&#10;Je me permets de vous contacter au sujet de…"></textarea>
+            <small class="set-hint">Variables : <code>{entreprise}</code> <code>{poste}</code> <code>{nom}</code></small>
+          </div>
+
+          <div class="set-actions">
+            <button type="button" class="set-btn set-btn-primary" id="settings-tpl-save">Enregistrer le modèle</button>
+          </div>
+        </section>
+
+        <!-- 4. Notifications -->
+        <section class="setting-block set-card" aria-labelledby="set-notif-h">
+          <div class="set-head">
+            <span class="set-ico" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+            <div class="setting-text"><h3 id="set-notif-h">Notifications</h3><p>Choisis ce que tu souhaites recevoir.</p></div>
+          </div>
+
+          <ul class="set-toggles">
+            <li class="set-toggle-row">
+              <div class="set-toggle-text"><strong id="tg-email-l">Alertes par email</strong><span>Réponses d'entreprises et résumés de recherche.</span></div>
+              <label class="switch"><input type="checkbox" id="settings-notif-email" role="switch" aria-labelledby="tg-email-l" checked><span class="switch-track" aria-hidden="true"></span></label>
+            </li>
+            <li class="set-toggle-row">
+              <div class="set-toggle-text"><strong id="tg-follow-l">Rappels de relance</strong><span>Un rappel si une candidature reste sans réponse.</span></div>
+              <label class="switch"><input type="checkbox" id="settings-notif-followup" role="switch" aria-labelledby="tg-follow-l" checked><span class="switch-track" aria-hidden="true"></span></label>
+            </li>
+          </ul>
+        </section>
+
+        <!-- 5. Zone de danger -->
+        <section class="setting-block set-card set-wide set-danger" aria-labelledby="set-danger-h">
+          <div class="set-head">
+            <span class="set-ico" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg></span>
+            <div class="setting-text"><h3 id="set-danger-h">Zone de danger</h3><p>Ces actions sont définitives.</p></div>
+          </div>
+
+          <div class="set-danger-grid">
+            <div class="set-danger-item">
+              <div><strong>Vider l'historique</strong><span>Supprime toutes tes recherches et candidatures enregistrées.</span></div>
+              <button type="button" class="set-btn set-btn-danger" id="settings-clear-history">Vider l'historique</button>
+            </div>
+            <div class="set-danger-item">
+              <div><strong>Supprimer le compte</strong><span>Efface ton compte et toutes tes données, sans retour possible.</span></div>
+              <button type="button" class="set-btn set-btn-danger-solid" id="settings-delete-account">Supprimer le compte</button>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section id="profile-modal" class="page view-page" hidden>
+      <div class="modal modal-profile pf" id="pf-root" role="region" aria-label="Profil">
+        <div class="pf-banner" aria-hidden="true"></div>
+        <button type="button" class="pf-back" data-close aria-label="Fermer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+
+        <!-- En-tête d'identité -->
+        <section class="pf-card pf-ident">
+          <div class="pf-ident-main">
+            <div class="pf-avatar-wrap">
+              <span class="avatar pf-avatar" id="profile-avatar-preview">?</span>
+              <button type="button" class="pf-avatar-btn" id="pf-avatar-btn" aria-label="Changer la photo" data-i18n-aria="pf_avatar_change">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13" r="3.4"/></svg>
+              </button>
+              <input type="file" id="pf-avatar-input" accept="image/png,image/jpeg,image/webp" hidden>
+            </div>
+            <div class="pf-ident-text">
+              <h2 class="profile-fullname" id="profile-fullname-display">—</h2>
+              <p class="profile-email" id="profile-email-display">—</p>
+              <p class="pf-role">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg>
+                <span class="pf-role-label" data-i18n="pf_target_label">Poste visé</span>
+                <strong id="pf-role-display">—</strong>
+              </p>
+              <span class="pf-status" id="pf-status-badge"><i aria-hidden="true"></i><span id="pf-status-text">—</span></span>
+            </div>
+          </div>
+          <div class="pf-ident-actions">
+            <button type="button" id="pf-edit-btn" class="pf-btn pf-btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              <span data-i18n="pf_edit">Modifier le profil</span>
+            </button>
+            <button type="button" id="pf-cancel-btn" class="pf-btn pf-btn-ghost" hidden data-i18n="pf_cancel">Annuler</button>
+            <button type="button" id="pf-save-btn" class="pf-btn pf-btn-primary" hidden data-i18n="pf_save">Enregistrer</button>
+          </div>
+
+          <div class="pf-headedit pf-edit-only">
+            <div class="pf-field">
+              <label for="pf-role-input" data-i18n="pf_target_label">Poste visé</label>
+              <input id="pf-role-input" type="text" maxlength="120" data-i18n-placeholder="pf_target_ph" placeholder="Ex. Développeur Full-Stack">
+            </div>
+            <div class="pf-field">
+              <label for="pf-status-select" data-i18n="pf_status_label">Statut de recherche</label>
+              <select id="pf-status-select"></select>
+            </div>
+          </div>
+        </section>
+
+        <div class="pf-grid">
+          <div class="pf-col">
+            <!-- Informations personnelles -->
+            <section class="pf-card">
+              <header class="pf-card-head">
+                <h3 data-i18n="pf_personal_title">Informations personnelles</h3>
+                <p data-i18n="pf_personal_sub">Ces informations aident les recruteurs à te contacter.</p>
+              </header>
+              <div class="pf-fields">
+                <div class="pf-field">
+                  <span class="pf-label" data-i18n="profile_firstname_label">Prénom</span>
+                  <p class="pf-value" id="profile-firstname-display">—</p>
+                </div>
+                <div class="pf-field">
+                  <span class="pf-label" data-i18n="profile_lastname_label">Nom</span>
+                  <p class="pf-value" id="profile-lastname-display">—</p>
+                </div>
+                <div class="pf-field">
+                  <span class="pf-label"><label for="pf-phone-input" data-i18n="profile_phone_label">Téléphone</label></span>
+                  <p class="pf-view pf-value" id="profile-phone-display">—</p>
+                  <input class="pf-edit" id="pf-phone-input" type="tel" maxlength="40" autocomplete="tel">
+                </div>
+                <div class="pf-field">
+                  <span class="pf-label"><label for="pf-city-input" data-i18n="pf_city_label">Ville / Localisation</label></span>
+                  <p class="pf-view pf-value" id="pf-city-display">—</p>
+                  <input class="pf-edit" id="pf-city-input" type="text" maxlength="200" data-i18n-placeholder="pf_city_ph" placeholder="Marrakech, Maroc" autocomplete="address-level2">
+                </div>
+                <div class="pf-field">
+                  <span class="pf-label" data-i18n="profile_birth_label">Date de naissance</span>
+                  <p class="pf-value" id="profile-birth-display">—</p>
+                </div>
+              </div>
+              <p class="pf-note pf-edit-only" data-i18n="pf_account_hint">Prénom, nom et date de naissance viennent de ton compte et ne se modifient pas ici.</p>
+            </section>
+
+            <!-- Compétences -->
+            <section class="pf-card">
+              <header class="pf-card-head">
+                <h3 data-i18n="pf_skills_title">Compétences &amp; mots-clés</h3>
+                <p class="pf-view" data-i18n="pf_skills_sub">Réutilisées pour générer ton CV et tes lettres de motivation.</p>
+                <p class="pf-edit-only" data-i18n="pf_skills_sub_edit">Appuie sur Entrée pour ajouter une compétence.</p>
+              </header>
+              <ul class="pf-tags" id="pf-skills-list" aria-label="Compétences"></ul>
+              <p class="pf-empty" id="pf-skills-empty" hidden data-i18n="pf_skills_empty">Aucune compétence pour l'instant.</p>
+              <div class="pf-edit-only pf-skill-add">
+                <div class="pf-skill-row">
+                  <input id="pf-skill-input" type="text" maxlength="40" data-i18n-placeholder="pf_skill_add_ph" placeholder="Ajouter une compétence…" aria-label="Ajouter une compétence">
+                  <button type="button" id="pf-skill-add-btn" class="pf-btn pf-btn-primary" data-i18n="pf_skill_add">Ajouter</button>
+                </div>
+                <div class="pf-suggest" id="pf-suggest"></div>
+              </div>
+            </section>
+          </div>
+
+          <div class="pf-col">
+            <!-- CV -->
+            <section class="pf-card">
+              <header class="pf-card-head"><h3 data-i18n="pf_cv_title">Mon CV</h3></header>
+              <div class="pf-cv">
+                <span class="pf-cv-ico" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>
+                <div class="pf-cv-text">
+                  <p class="pf-cv-name" id="pf-cv-name">—</p>
+                  <p class="pf-cv-meta" id="pf-cv-meta"></p>
+                </div>
+              </div>
+              <div class="pf-cv-actions">
+                <button type="button" id="pf-cv-download" class="pf-btn pf-btn-ghost">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+                  <span data-i18n="pf_cv_download">Télécharger</span>
+                </button>
+                <button type="button" id="pf-cv-update" class="pf-btn pf-btn-soft">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15.5 6.2M3 12A9 9 0 0 1 18.5 5.8"/><path d="M21 4v5h-5M3 20v-5h5"/></svg>
+                  <span data-i18n="pf_cv_update">Mettre à jour</span>
+                </button>
+                <input type="file" id="pf-cv-input" accept=".pdf,.doc,.docx,.txt" hidden>
+              </div>
+              <button type="button" id="pf-cv-manage" class="pf-link" data-i18n="pf_cv_manage">Générer ou gérer mon CV avec l'IA</button>
+            </section>
+
+            <!-- Liens -->
+            <section class="pf-card">
+              <header class="pf-card-head">
+                <h3 data-i18n="pf_links_title">Liens professionnels</h3>
+                <p data-i18n="pf_links_note">Enregistrés sur cet appareil.</p>
+              </header>
+              <div class="pf-links">
+                <div class="pf-field">
+                  <span class="pf-label"><label for="pf-linkedin-input" data-i18n="pf_link_linkedin">LinkedIn</label></span>
+                  <div class="pf-view pf-value" id="pf-linkedin-view">—</div>
+                  <input class="pf-edit" id="pf-linkedin-input" type="text" maxlength="200" placeholder="linkedin.com/in/…" autocomplete="off">
+                </div>
+                <div class="pf-field">
+                  <span class="pf-label"><label for="pf-portfolio-input" data-i18n="pf_link_portfolio">GitHub / Portfolio</label></span>
+                  <div class="pf-view pf-value" id="pf-portfolio-view">—</div>
+                  <input class="pf-edit" id="pf-portfolio-input" type="text" maxlength="200" placeholder="github.com/…" autocomplete="off">
+                </div>
+                <div class="pf-field">
+                  <span class="pf-label"><label for="pf-contact-input" data-i18n="pf_link_contact">Contact direct</label></span>
+                  <div class="pf-view pf-value" id="pf-contact-view">—</div>
+                  <input class="pf-edit" id="pf-contact-input" type="text" maxlength="200" data-i18n-placeholder="pf_link_contact_ph" placeholder="Email ou lien de contact" autocomplete="off">
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <!-- Déconnexion -->
+        <section class="pf-logout-card">
+          <div>
+            <h3 data-i18n="pf_logout_title">Session</h3>
+            <p data-i18n="pf_logout_text">Tu seras déconnecté de Forsa sur cet appareil.</p>
+          </div>
+          <button type="button" id="profile-logout" class="profile-logout pf-logout-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+            <span data-i18n="menu_logout">Se déconnecter</span>
+          </button>
+        </section>
+
+        <div class="pf-toast" id="pf-toast" role="status" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section id="cv-modal" class="page view-page" hidden>
+      <div class="modal modal-wide" role="region">
+        <div class="modal-head">
+          <h2 data-i18n="cv_title">Mon CV</h2>
+          <button type="button" class="modal-close" data-close aria-label="Fermer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+        </div>
+        <div class="modal-body">
+          <div class="cv-current-status" id="cv-current-status">
+            <span data-i18n="cv_status_none">Tu n'as pas encore de CV.</span>
+          </div>
+
+          <div class="cv-section">
+            <h3 data-i18n="cv_upload_title">Téléverser un fichier existant</h3>
+            <p class="hint" data-i18n="cv_upload_hint">PDF, Word (.doc/.docx) ou .txt, 8 Mo maximum.</p>
+            <div class="cv-upload-row">
+              <input type="file" id="cv-file-input" accept=".pdf,.doc,.docx,.txt">
+              <button type="button" id="cv-upload-btn" class="modal-secondary" data-i18n="cv_upload_btn">Téléverser</button>
+            </div>
+            <div class="cv-file-actions" id="cv-file-actions" hidden>
+              <button type="button" id="cv-download-link" class="modal-link" data-i18n="cv_download">Télécharger mon CV</button>
+              <button type="button" id="cv-delete-btn" class="modal-link modal-link-danger" data-i18n="cv_delete">Supprimer mon CV</button>
+            </div>
+          </div>
+
+          <div class="cv-divider"><span data-i18n="cv_or">ou</span></div>
+
+          <div class="cv-section">
+            <h3 data-i18n="cv_generate_title">Générer mon CV avec l'IA</h3>
+            <p class="hint" data-i18n="cv_generate_hint">Renseigne tes informations, l'IA rédige un CV structuré à partir de ce que tu donnes (rien n'est inventé).</p>
+
+            <form id="cv-profile-form" class="cv-form">
+              <div class="cv-form-grid">
+                <div class="auth-field">
+                  <label for="cv-full-name" data-i18n="cv_field_name">Nom complet</label>
+                  <input id="cv-full-name" type="text" required maxlength="120">
+                </div>
+                <div class="auth-field">
+                  <label for="cv-target-role" data-i18n="cv_field_role">Poste recherché</label>
+                  <input id="cv-target-role" type="text" maxlength="120">
+                </div>
+                <div class="auth-field">
+                  <label for="cv-phone" data-i18n="cv_field_phone">Téléphone</label>
+                  <input id="cv-phone" type="text" maxlength="40">
+                </div>
+                <div class="auth-field">
+                  <label for="cv-address" data-i18n="cv_field_address">Adresse</label>
+                  <input id="cv-address" type="text" maxlength="200">
+                </div>
+              </div>
+              <div class="auth-field">
+                <label for="cv-education" data-i18n="cv_field_education">Formation</label>
+                <textarea id="cv-education" rows="3" data-i18n-placeholder="cv_field_education_ph" placeholder="Diplômes, écoles, années…"></textarea>
+              </div>
+              <div class="auth-field">
+                <label for="cv-experience" data-i18n="cv_field_experience">Expérience professionnelle</label>
+                <textarea id="cv-experience" rows="4" data-i18n-placeholder="cv_field_experience_ph" placeholder="Postes occupés, entreprises, missions, dates…"></textarea>
+              </div>
+              <div class="auth-field">
+                <label for="cv-skills" data-i18n="cv_field_skills">Compétences</label>
+                <textarea id="cv-skills" rows="2" data-i18n-placeholder="cv_field_skills_ph" placeholder="Compétences techniques et humaines…"></textarea>
+              </div>
+              <div class="auth-field">
+                <label for="cv-languages" data-i18n="cv_field_languages">Langues</label>
+                <input id="cv-languages" type="text" maxlength="500" data-i18n-placeholder="cv_field_languages_ph" placeholder="Français (natif), Anglais (courant)…">
+              </div>
+
+              <button type="submit" id="cv-generate-btn" class="modal-primary" data-i18n="cv_generate_btn">Générer mon CV avec l'IA</button>
+            </form>
+
+            <div id="cv-generated-wrap" class="cv-generated-wrap" hidden>
+              <label for="cv-generated-textarea" data-i18n="cv_generated_label">CV généré (modifiable)</label>
+              <textarea id="cv-generated-textarea" rows="12"></textarea>
+              <div class="cv-generated-actions">
+                <button type="button" id="cv-save-generated-btn" class="modal-secondary" data-i18n="cv_save_edits">Enregistrer les modifications</button>
+                <button type="button" id="cv-download-generated-btn" class="modal-secondary" data-i18n="cv_download_txt">Télécharger (.pdf)</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="cv-status" class="status" hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="application-modal" class="page view-page" hidden>
+      <div class="modal modal-wide" role="region">
+        <div class="modal-head">
+          <h2 data-i18n="app_title">Postuler</h2>
+          <button type="button" class="modal-close" data-close aria-label="Fermer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+        </div>
+        <div class="modal-body">
+          <div class="application-company" id="application-company"></div>
+
+          <div id="application-no-profile" class="status error" hidden>
+            <span data-i18n="app_no_profile">Complète d'abord ton profil (nom, expérience ou compétences) dans "Mon CV" pour générer une lettre personnalisée.</span>
+            <button type="button" id="application-open-cv-btn" class="modal-link" data-i18n="app_open_cv">Ouvrir Mon CV</button>
+          </div>
+
+          <div id="application-no-cv" class="status" hidden>
+            <span data-i18n="app_no_cv">Tu n'as pas encore de CV enregistré. Ajoute-en un dans "Mon CV" pour pouvoir l'envoyer avec ta candidature.</span>
+            <button type="button" id="application-open-cv-from-cv-btn" class="modal-link" data-i18n="app_open_cv">Ouvrir Mon CV</button>
+          </div>
+
+          <div class="auth-field">
+            <label for="application-email" data-i18n="app_email_label">Email de l'entreprise</label>
+            <input id="application-email" type="email" maxlength="254" data-i18n-placeholder="app_email_ph" placeholder="recrutement@entreprise.com">
+            <small id="application-email-hint" class="field-hint"></small>
+          </div>
+          <div class="auth-field">
+            <label for="application-job-title" data-i18n="app_job_title">Poste visé (optionnel)</label>
+            <input id="application-job-title" type="text" maxlength="150" data-i18n-placeholder="app_job_title_ph" placeholder="Ex : Développeur web, stage marketing…">
+          </div>
+          <div class="auth-field">
+            <label for="application-notes" data-i18n="app_notes">Précisions pour l'IA (optionnel)</label>
+            <textarea id="application-notes" rows="2" maxlength="1000" data-i18n-placeholder="app_notes_ph" placeholder="Ex : disponible dès juin, motivé par le secteur…"></textarea>
+          </div>
+
+          <button type="button" id="application-generate-btn" class="modal-secondary" data-i18n="app_generate_btn">Générer la lettre avec l'IA</button>
+
+          <div class="auth-field">
+            <label for="application-letter" data-i18n="app_letter_label">Lettre de motivation (modifiable)</label>
+            <textarea id="application-letter" rows="12" data-i18n-placeholder="app_letter_ph" placeholder="Clique sur « Générer la lettre avec l'IA » ou écris-la toi-même…"></textarea>
+          </div>
+
+          <div id="application-status" class="status" hidden></div>
+        </div>
+        <div class="modal-actions application-actions">
+          <button type="button" id="application-download-cv-btn" class="modal-secondary" data-i18n="app_download_cv">Télécharger mon CV</button>
+          <button type="button" id="application-download-btn" class="modal-secondary" data-i18n="app_download">Télécharger (.txt)</button>
+          <button type="button" id="application-save-btn" class="modal-secondary" data-i18n="app_save">Enregistrer la candidature</button>
+          <button type="button" id="application-send-btn" class="modal-primary" data-i18n="app_send">Envoyer par email</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="applications-modal" class="page view-page" hidden>
+      <div class="modal modal-history" role="region" aria-labelledby="history-heading">
+        <div class="history-top">
+          <div class="history-head">
+            <div>
+              <h2 id="history-heading" data-i18n="applications_title">Historique</h2>
+              <p class="modal-subtitle" data-i18n="applications_subtitle">Les candidatures que tu as envoyées ou enregistrées.</p>
+            </div>
+            <button type="button" class="modal-close" data-close aria-label="Fermer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></button>
+          </div>
+          <div class="applications-tabs" role="tablist">
+            <button type="button" class="applications-tab active" data-tab="envoye" role="tab">
+              <span data-i18n="applications_tab_sent">Envoyées</span> <span class="applications-tab-count" id="applications-count-sent">0</span>
+            </button>
+            <button type="button" class="applications-tab" data-tab="postule" role="tab">
+              <span data-i18n="applications_tab_saved">Enregistrées</span> <span class="applications-tab-count" id="applications-count-saved">0</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="history-scroll">
+          <div id="applications-empty" class="empty-state" hidden>
+            <span class="empty-state-icon" aria-hidden="true">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v4.5h4.5"/><path d="M12 7.5V12l3 2"/></svg>
+            </span>
+            <p id="applications-empty-text"></p>
+            <p class="empty-state-hint" data-i18n="applications_empty_hint">Elles apparaîtront ici dès que tu postules à une entreprise.</p>
+          </div>
+          <div id="applications-list" class="applications-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="page" id="page-home">
+    <header class="hero">
+      <svg class="hero-art" viewBox="0 0 1200 760" preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="ha-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F7F2EA"/><stop offset=".5" stop-color="#EADFCB"/><stop offset="1" stop-color="#E0C58F"/>
+    </linearGradient>
+    <radialGradient id="ha-sun" cx="0.58" cy="0.42" r="0.5">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity=".95"/><stop offset=".45" stop-color="#F3E3BE" stop-opacity=".45"/><stop offset="1" stop-color="#F3E3BE" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ha-lake" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#CDD0DD"/><stop offset="1" stop-color="#6F7FA3"/>
+    </linearGradient>
+    <linearGradient id="ha-glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F3DFA9"/><stop offset="1" stop-color="#E0C58F"/>
+    </linearGradient>
+    <linearGradient id="ha-far" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#D9CBC2"/><stop offset="1" stop-color="#C7B7AC"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="760" fill="url(#ha-sky)"/>
+  <rect width="1200" height="760" fill="url(#ha-sun)"/>
+  <path d="M0 470 L110 405 L210 440 L350 335 L455 262 L520 330 L610 300 L720 395 L860 335 L990 415 L1200 360 L1200 570 L0 570Z" fill="url(#ha-far)"/>
+  <path d="M455 262 L420 312 L444 304 L458 326 L478 304 L503 318 L520 330 L497 296Z" fill="#FFFFFF" opacity=".92"/>
+  <path d="M860 335 L835 372 L853 366 L866 384 L884 366 L902 374Z" fill="#FFFFFF" opacity=".75"/>
+  <path d="M0 540 L140 480 L260 520 L390 455 L520 520 L640 490 L780 540 L930 478 L1080 530 L1200 500 L1200 600 L0 600Z" fill="#8D98B5" opacity=".85"/>
+  <rect y="560" width="1200" height="200" fill="url(#ha-lake)"/>
+  <g stroke="#FFFFFF" stroke-linecap="round" opacity=".38">
+    <path d="M640 600h140M700 622h240M600 648h160M820 662h200M520 690h120" stroke-width="2"/>
+  </g>
+  <path d="M0 566 C200 548 360 575 520 560 S900 548 1200 566 L1200 590 L0 590Z" fill="#3C507D"/>
+  <g>
+    <ellipse cx="840" cy="354" rx="236" ry="13" fill="#F5F0E9"/>
+    <rect x="608" y="352" width="464" height="16" rx="8" fill="#E6DDD5"/>
+    <rect x="636" y="368" width="408" height="98" fill="url(#ha-glass)"/>
+    <g stroke="#112250" stroke-width="3" opacity=".75">
+      <path d="M636 368V466M704 368V466M772 368V466M840 368V466M908 368V466M976 368V466M1044 368V466"/>
+    </g>
+    <g fill="#3C507D" opacity=".55">
+      <rect x="720" y="430" width="70" height="22" rx="4"/><rect x="820" y="422" width="46" height="30" rx="3"/><rect x="930" y="432" width="64" height="20" rx="4"/>
+    </g>
+    <rect x="596" y="466" width="488" height="12" rx="3" fill="#D9CBC2"/>
+    <rect x="548" y="478" width="584" height="20" fill="#3C507D"/>
+    <rect x="548" y="498" width="584" height="6" fill="#2C3C69" opacity=".6"/>
+  </g>
+  <g fill="#112250">
+    <path d="M1112 300 L1148 392 L1128 388 L1160 466 L1140 462 L1176 540 L1048 540 L1084 462 L1066 466 L1098 388 L1078 392Z"/>
+    <path d="M520 360 L552 438 L534 434 L562 504 L544 500 L576 560 L464 560 L496 500 L480 504 L508 434 L490 438Z"/>
+    <path d="M1180 400 L1200 450 L1200 560 L1150 560 L1164 480 L1156 484Z" opacity=".9"/>
+  </g>
+  <path d="M960 560 C1010 520 1090 500 1200 505 L1200 600 L930 600Z" fill="#2C3C69"/>
+  <path d="M1020 560 C1070 535 1130 528 1200 534 L1200 600 L1000 600Z" fill="#1E2F5E" opacity=".8"/>
+  <g fill="#FFFFFF" opacity=".9">
+    <rect x="590" y="486" width="46" height="6" rx="3" transform="rotate(-8 590 486)"/>
+    <rect x="650" y="488" width="46" height="6" rx="3" transform="rotate(-8 650 488)"/>
+  </g>
+</svg>
+      <div class="hero-main">
+        <div class="hero-copy">
+          <h1 data-i18n="hero_title">Repère les entreprises, rue par rue.</h1>
+          <p data-i18n="hero_desc">Colle une liste de mots-clés — on interroge Google Places pour chacun, fusionne les résultats et retire les doublons automatiquement.</p>
+          <div class="hero-cta">
+            <button type="button" class="hero-btn hero-btn-dark" id="hero-start">
+              <span data-i18n="hero_cta_start">Commencer</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+            <button type="button" class="hero-btn hero-btn-ghost" id="hero-results">
+              <span class="hero-btn-ico" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span>
+              <span data-i18n="hero_cta_results">Voir les résultats</span>
+            </button>
+          </div>
+        </div>
+        <ul class="feature-strip">
+        <li>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 6 9 17l-5-5"/></svg>
+          <span data-i18n="feature_dedupe">Résultats dédupliqués</span>
+        </li>
+        <li>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg>
+          <span data-i18n="feature_map">Carte interactive</span>
+        </li>
+        <li>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          <span data-i18n="feature_export">Export CSV &amp; Excel</span>
+        </li>
+      </ul>
+      </div>
+
+      <div class="hero-dock">
+        <aside class="brief">
+        <div class="step">
+          <div class="step-head"><span class="step-num">1</span><label for="queries" data-i18n="step1_label">Mots-clés</label></div>
+          <textarea id="queries" rows="6" data-i18n-placeholder="queries_placeholder" placeholder="agence intelligence artificielle Marrakech
+consultant IA Marrakech
+startups Marrakech"></textarea>
+          <p class="hint" data-i18n="step1_hint">Une ligne = une requête. Les doublons (même établissement) sont retirés à la fin.</p>
+          <div class="recent-searches" id="recent-searches" hidden>
+            <span class="recent-label" data-i18n="recent_label">Récentes</span>
+            <div class="recent-chips" id="recent-chips"></div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-head"><span class="step-num">2</span><label data-i18n="step2_label">Langue &amp; pays</label></div>
+          <div class="row">
+            <select id="language" aria-label="Langue">
+              <option value="fr" selected data-i18n="lang_fr">Français</option>
+              <option value="en" data-i18n="lang_en">Anglais</option>
+              <option value="ar" data-i18n="lang_ar">Arabe</option>
+            </select>
+            <input id="region" type="text" data-i18n-placeholder="region_placeholder" placeholder="MA, FR…" maxlength="2" aria-label="Code pays">
+          </div>
+        </div>
+
+        <button type="button" id="submit-btn">
+          <span class="btn-label" data-i18n="submit_label">Lancer la recherche</span>
+        </button>
+
+        <div id="status" class="status" hidden></div>
+      </aside>
+        <div class="hero-stats">
+          <div class="stats">
+            <div class="stat">
+              <span class="stat-value" id="stat-count">0</span>
+              <span class="stat-label" data-i18n="stat_results">résultats</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" id="stat-categories">0</span>
+              <span class="stat-label" data-i18n="stat_categories">catégories</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" id="stat-sites">0</span>
+              <span class="stat-label" data-i18n="stat_sites">avec site web</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" id="stat-emails">0</span>
+              <span class="stat-label" data-i18n="stat_emails">avec email</span>
+            </div>
+            <div class="stat">
+              <span class="stat-value" id="stat-avg-rating">—</span>
+              <span class="stat-label" data-i18n="stat_avg_rating">note moyenne</span>
+            </div>
+          </div>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card-top">
+            <span class="hero-card-ico" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></svg></span>
+            <button type="button" class="hero-card-go" id="hero-cv" aria-label="CV"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg></button>
+          </div>
+          <h2 data-i18n="hero_card_title">Trouve ton prochain poste</h2>
+          <p data-i18n="hero_card_text">Ajoute ton CV, puis candidate directement depuis les résultats.</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="fav-head">
+      <h1 data-i18n="menu_favorites">Favoris</h1>
+      <p id="fav-head-count"></p>
+    </div>
+
+    <main class="layout">
+      <section class="results">
+        <div class="section-label">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M9 9v11"/></svg>
+          <span data-i18n="results_label">Résultats</span>
+        </div>
+        <div class="results-header">
+          <label class="email-filter"><input type="checkbox" id="email-only"> <span data-i18n="filter_email_only">Avec email uniquement</span></label>
+          <div class="export-actions">
+            <button id="export-csv" disabled data-i18n="export_csv">Exporter CSV</button>
+            <button id="export-xlsx" disabled data-i18n="export_xlsx">Exporter Excel</button>
+          </div>
+        </div>
+
+        <div class="view-toggle" role="tablist">
+          <button type="button" class="view-tab active" data-view="table" role="tab" aria-selected="true" data-i18n="view_table">Tableau</button>
+          <button type="button" class="view-tab" data-view="map" role="tab" aria-selected="false" data-i18n="view_map">Carte</button>
+        </div>
+
+        <div class="cards-wrap" id="view-table">
+          <div class="sort-bar">
+            <span class="sort-bar-label" data-i18n="sort_by">Trier par</span>
+            <button type="button" class="th-sort" data-sort="nom"><span data-i18n="th_name">Établissement</span><span class="sort-arrow"></span></button>
+            <button type="button" class="th-sort" data-sort="categorie"><span data-i18n="th_category">Catégorie</span><span class="sort-arrow"></span></button>
+            <button type="button" class="th-sort" data-sort="note"><span data-i18n="th_rating">Note</span><span class="sort-arrow"></span></button>
+            <button type="button" class="th-sort" data-sort="email"><span data-i18n="th_email">Email</span><span class="sort-arrow"></span></button>
+          </div>
+          <div class="cards-grid" id="results-body" role="list">
+            <div class="empty-state cards-empty">
+              <span class="empty-icon"></span>
+              <p data-i18n="empty_initial">Aucune recherche pour l'instant.<br>Renseigne tes mots-clés ci-dessus et lance la recherche.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="map-wrap" id="view-map" hidden>
+          <div id="map"></div>
+          <div class="empty-state map-empty" id="map-empty">
+            <span class="empty-icon"></span>
+            <p data-i18n="map_empty">Aucun résultat géolocalisé à afficher pour l'instant.</p>
+          </div>
+        </div>
+
+      </section>
+    </main>
+    </div>
+
+    <div class="page" id="page-dashboard" hidden>
+      <header class="page-head">
+        <h1 data-i18n="dashboard_title">Tableau de bord</h1>
+        <p data-i18n="dashboard_desc">Un aperçu de ta recherche d'entreprises et de tes candidatures.</p>
+      </header>
+
+      <div class="kpi-grid">
+        <div class="kpi-card kpi-primary">
+          <span class="kpi-label" data-i18n="kpi_sent">Candidatures envoyées</span>
+          <span class="kpi-value" id="kpi-sent">0</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label" data-i18n="kpi_saved">Candidatures enregistrées</span>
+          <span class="kpi-value" id="kpi-saved">0</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label" data-i18n="kpi_favorites">Favoris</span>
+          <span class="kpi-value" id="kpi-favorites">0</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-label" data-i18n="kpi_results">Entreprises trouvées</span>
+          <span class="kpi-value" id="kpi-results">0</span>
+        </div>
+      </div>
+
+      <div class="charts-section" id="charts-section">
+        <div class="charts-header">
+          <h2 data-i18n="charts_title">Graphiques</h2>
+          <p class="hint" data-i18n="charts_hint">Basés sur les résultats affichés dans le tableau ci-dessus.</p>
+        </div>
+
+        <div class="charts-grid" id="charts-grid" hidden>
+          <div class="chart-card">
+            <h3 data-i18n="chart_categories_title">Résultats par catégorie</h3>
+            <div class="chart-canvas-wrap"><canvas id="chart-categories"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h3 data-i18n="chart_website_title">Présence d'un site web</h3>
+            <div class="chart-canvas-wrap"><canvas id="chart-website"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h3 data-i18n="chart_rating_title">Répartition des notes</h3>
+            <div class="chart-canvas-wrap"><canvas id="chart-rating"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <h3 data-i18n="chart_queries_title">Résultats par mot-clé recherché</h3>
+            <div class="chart-canvas-wrap"><canvas id="chart-queries"></canvas></div>
+          </div>
+        </div>
+
+        <div class="empty-state charts-empty" id="charts-empty">
+          <span class="empty-icon"></span>
+          <p data-i18n="charts_empty">Lance une recherche pour voir apparaître les graphiques.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="page" id="page-chatbot" hidden>
+      <header class="page-head">
+        <h1 data-i18n="chat_title">Assistant Forsa</h1>
+        <p data-i18n="chat_desc">Pose tes questions sur ton CV, tes lettres de motivation, tes entretiens ou ta stratégie de recherche.</p>
+      </header>
+
+      <div class="chat-card">
+        <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
+        <div class="chat-suggestions" id="chat-suggestions"></div>
+        <form class="chat-form" id="chat-form" autocomplete="off">
+          <textarea id="chat-input" rows="1" maxlength="4000" data-i18n-placeholder="chat_placeholder" placeholder="Écris ton message…" aria-label="Message"></textarea>
+          <button type="submit" id="chat-send" class="chat-send" aria-label="Envoyer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7Z"/></svg>
+          </button>
+        </form>
+        <div class="chat-footer">
+          <button type="button" id="chat-clear" class="modal-link" data-i18n="chat_clear">Effacer la conversation</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  </div>
+
+  <!-- Modale : changer le mot de passe -->
+  <div class="modal-overlay" id="password-modal" hidden>
+    <div class="modal set-modal" role="dialog" aria-modal="true" aria-labelledby="password-modal-h">
+      <div class="modal-head">
+        <h2 id="password-modal-h">Changer le mot de passe</h2>
+        <button type="button" class="modal-close" data-close-password aria-label="Fermer">×</button>
+      </div>
+      <div class="set-field">
+        <label for="pw-current">Mot de passe actuel</label>
+        <input id="pw-current" type="password" autocomplete="current-password">
+      </div>
+      <div class="set-field">
+        <label for="pw-new">Nouveau mot de passe</label>
+        <input id="pw-new" type="password" autocomplete="new-password" minlength="8">
+        <small class="set-hint">8 caractères minimum.</small>
+      </div>
+      <div class="set-field">
+        <label for="pw-confirm">Confirmer le nouveau mot de passe</label>
+        <input id="pw-confirm" type="password" autocomplete="new-password">
+      </div>
+      <p class="set-error" id="pw-error" role="alert" hidden></p>
+      <div class="set-actions">
+        <button type="button" class="set-btn" data-close-password>Annuler</button>
+        <button type="button" class="set-btn set-btn-primary" id="pw-submit">Mettre à jour</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modale : confirmation d'action dangereuse (réutilisable) -->
+  <div class="modal-overlay" id="confirm-modal" hidden>
+    <div class="modal set-modal set-modal-danger" role="alertdialog" aria-modal="true" aria-labelledby="confirm-modal-h" aria-describedby="confirm-modal-p">
+      <div class="modal-head"><h2 id="confirm-modal-h">Confirmer</h2></div>
+      <p id="confirm-modal-p" class="set-confirm-text">Cette action est irréversible.</p>
+      <div class="set-actions">
+        <button type="button" class="set-btn" id="confirm-cancel">Annuler</button>
+        <button type="button" class="set-btn set-btn-danger-solid" id="confirm-ok">Confirmer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="jspdf.umd.min.js"></script>
+  <script src="chart.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"></script>
+  <script src="auth.js"></script>
+  <script src="app.js?v=17"></script>
+  <script src="tutorial.js?v=1"></script>
+  <script>
+  /* Paramètres : comportement UI (aperçus + préférences locales). À brancher sur l'API si besoin. */
+  (function () {
+    var $ = function (id) { return document.getElementById(id); };
+    var KEY = "forsa_settings_prefs";
+    var prefs = {};
+    try { prefs = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch (e) {} }
+  
+    var radius = $("settings-radius"), out = $("settings-radius-out");
+    function paintRadius() {
+      out.textContent = radius.value + " km";
+      radius.style.setProperty("--fill", ((radius.value - 5) / 45 * 100) + "%");
+    }
+    if (prefs.radius) radius.value = prefs.radius;
+    if (prefs.city) $("settings-city").value = prefs.city;
+    if (prefs.maxResults) $("settings-max-results").value = prefs.maxResults;
+    if (prefs.tplSubject) $("settings-tpl-subject").value = prefs.tplSubject;
+    if (prefs.tplBody) $("settings-tpl-body").value = prefs.tplBody;
+    if (prefs.notifEmail === false) $("settings-notif-email").checked = false;
+    if (prefs.notifFollowup === false) $("settings-notif-followup").checked = false;
+    radius.addEventListener("input", paintRadius); paintRadius();
+  
+    $("settings-notif-email").addEventListener("change", function (e) { prefs.notifEmail = e.target.checked; save(); });
+    $("settings-notif-followup").addEventListener("change", function (e) { prefs.notifFollowup = e.target.checked; save(); });
+    $("settings-search-save").addEventListener("click", function () {
+      prefs.city = $("settings-city").value; prefs.radius = radius.value; prefs.maxResults = $("settings-max-results").value; save();
+    });
+    $("settings-tpl-save").addEventListener("click", function () {
+      prefs.tplSubject = $("settings-tpl-subject").value; prefs.tplBody = $("settings-tpl-body").value; save();
+    });
+  
+    /* Avatar */
+    var av = $("settings-avatar-preview"), avIn = $("settings-avatar-input");
+    $("settings-avatar-btn").addEventListener("click", function () { avIn.click(); });
+    avIn.addEventListener("change", function () {
+      var f = avIn.files[0]; if (!f || f.size > 2 * 1024 * 1024) return;
+      av.style.backgroundImage = "url(" + URL.createObjectURL(f) + ")"; av.textContent = "";
+    });
+    $("settings-avatar-remove").addEventListener("click", function () { av.style.backgroundImage = ""; av.textContent = "?"; avIn.value = ""; });
+  
+    /* CV */
+    var cvIn = $("settings-cv-input"), cvUrl = null;
+    $("settings-cv-replace").addEventListener("click", function () { cvIn.click(); });
+    cvIn.addEventListener("change", function () {
+      var f = cvIn.files[0]; if (!f) return;
+      if (cvUrl) URL.revokeObjectURL(cvUrl);
+      cvUrl = URL.createObjectURL(f);
+      $("settings-cv-name").textContent = f.name;
+      var s = $("settings-cv-status"); s.textContent = "Joint"; s.dataset.state = "ok";
+      $("settings-cv-view").disabled = false;
+    });
+    $("settings-cv-view").addEventListener("click", function () { if (cvUrl) window.open(cvUrl, "_blank", "noopener"); });
+  
+    /* Modales */
+    function openM(m) { m.hidden = false; var i = m.querySelector("input,button.set-btn"); if (i) i.focus(); }
+    function closeM(m) { m.hidden = true; }
+    var pwM = $("password-modal"), cfM = $("confirm-modal"), onOk = null;
+    $("settings-password-open").addEventListener("click", function () { $("pw-error").hidden = true; openM(pwM); });
+    pwM.querySelectorAll("[data-close-password]").forEach(function (b) { b.addEventListener("click", function () { closeM(pwM); }); });
+    $("pw-submit").addEventListener("click", function () {
+      var err = $("pw-error"), n = $("pw-new").value;
+      if (n.length < 8) { err.textContent = "Le mot de passe doit contenir au moins 8 caractères."; err.hidden = false; return; }
+      if (n !== $("pw-confirm").value) { err.textContent = "Les mots de passe ne correspondent pas."; err.hidden = false; return; }
+      err.hidden = true; closeM(pwM); /* TODO : appeler ton endpoint de changement de mot de passe */
+    });
+    function confirmAction(title, text, label, cb) {
+      $("confirm-modal-h").textContent = title; $("confirm-modal-p").textContent = text; $("confirm-ok").textContent = label;
+      onOk = cb; openM(cfM);
+    }
+    $("confirm-cancel").addEventListener("click", function () { closeM(cfM); });
+    $("confirm-ok").addEventListener("click", function () { closeM(cfM); if (onOk) onOk(); });
+    $("settings-clear-history").addEventListener("click", function () {
+      confirmAction("Vider l'historique", "Toutes tes recherches et candidatures enregistrées seront supprimées.", "Vider", function () { /* TODO API */ });
+    });
+    $("settings-delete-account").addEventListener("click", function () {
+      confirmAction("Supprimer le compte", "Ton compte et toutes tes données seront définitivement supprimés.", "Supprimer", function () { /* TODO API */ });
+    });
+    [pwM, cfM].forEach(function (m) {
+      m.addEventListener("click", function (e) { if (e.target === m) closeM(m); });
+      document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !m.hidden) closeM(m); });
+    });
+  })();
+  </script>
+</body>
+</html>

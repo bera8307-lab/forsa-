@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connexion — Forsa</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<script>
+  if (localStorage.getItem("places_finder_token")) {
+    window.location.replace("index.html");
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="glow glow-cyan" aria-hidden="true"></div>
+  <div class="glow glow-violet" aria-hidden="true"></div>
+
+  <div class="auth-shell">
+    <div class="auth-brand">
+      <div class="mark">
+        <img src="forsa-icon.png" alt="" class="mark-logo" width="30" height="30">
+        Forsa
+      </div>
+      <h2>Repère les entreprises, rue par rue.</h2>
+      <p>Connecte-toi pour retrouver tes recherches, tes favoris et lancer de nouvelles requêtes multi-mots-clés sur Google Places.</p>
+      <ul class="auth-feature-list">
+        <li>
+          <span class="feature-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+          Recherche multi-mots-clés avec déduplication automatique
+        </li>
+        <li>
+          <span class="feature-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg></span>
+          Carte interactive de tous tes résultats
+        </li>
+        <li>
+          <span class="feature-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>
+          Export CSV et Excel en un clic
+        </li>
+      </ul>
+    </div>
+
+    <div class="auth-panel">
+      <div class="auth-card">
+        <div class="auth-mark">
+          <img src="forsa-icon.png" alt="" class="mark-logo" width="30" height="30">
+          Forsa
+        </div>
+
+        <h1 class="auth-title">Connexion</h1>
+        <p class="auth-subtitle">Accède à ton espace de recherche d'entreprises.</p>
+
+        <form class="auth-form" id="login-form" novalidate>
+          <div class="auth-field">
+            <label for="email">Email</label>
+            <input id="email" type="email" required autocomplete="email" placeholder="toi@exemple.com">
+          </div>
+          <div class="auth-field">
+            <label for="password">Mot de passe</label>
+            <input id="password" type="password" required autocomplete="current-password" placeholder="••••••••">
+          </div>
+
+          <a class="auth-forgot" href="forgot-password.html">Mot de passe oublié ?</a>
+
+          <div id="auth-error" class="auth-error" hidden></div>
+
+          <button type="submit" class="auth-submit" id="submit-btn">
+            <span class="btn-label">Se connecter</span>
+          </button>
+        </form>
+
+        <p class="auth-switch">Pas encore de compte ? <a href="signup.html">Créer un compte</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    const form = document.getElementById("login-form");
+    const errorEl = document.getElementById("auth-error");
+    const submitBtn = document.getElementById("submit-btn");
+
+    function showError(message) {
+      errorEl.textContent = message;
+      errorEl.hidden = false;
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorEl.hidden = true;
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span class="spinner"></span><span class="btn-label">Connexion…</span>`;
+
+      try {
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await response.json();
+
+        if (response.status === 403) {
+          // Email pas encore vérifié : un nouveau code vient d'être envoyé.
+          window.location.href = "verify-email.html?email=" + encodeURIComponent(email);
+          return;
+        }
+        if (!response.ok) {
+          throw new Error(pfErrorMessage(data, "Échec de la connexion."));
+        }
+
+        pfSaveSession(data.token, data.user);
+        window.location.href = "index.html";
+      } catch (err) {
+        showError(err.message);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<span class="btn-label">Se connecter</span>`;
+      }
+    });
+  </script>
+</body>
+</html>

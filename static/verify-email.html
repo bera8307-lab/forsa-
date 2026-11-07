@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vérification de l'email — Forsa</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<script>
+  if (localStorage.getItem("places_finder_token")) {
+    window.location.replace("index.html");
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="glow glow-cyan" aria-hidden="true"></div>
+  <div class="glow glow-violet" aria-hidden="true"></div>
+
+  <div class="auth-shell">
+    <div class="auth-brand">
+      <div class="mark">
+        <img src="forsa-icon.png" alt="" class="mark-logo" width="30" height="30">
+        Forsa
+      </div>
+      <h2>Repère les entreprises, rue par rue.</h2>
+      <p>Connecte-toi pour retrouver tes recherches, tes favoris et lancer de nouvelles requêtes multi-mots-clés sur Google Places.</p>
+      <ul class="auth-feature-list">
+        <li>
+          <span class="feature-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>
+          Recherche multi-mots-clés avec déduplication automatique
+        </li>
+        <li>
+          <span class="feature-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12Z"/><circle cx="12" cy="9" r="2.4"/></svg></span>
+          Carte interactive de tous tes résultats
+        </li>
+        <li>
+          <span class="feature-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></span>
+          Export CSV et Excel en un clic
+        </li>
+      </ul>
+    </div>
+
+    <div class="auth-panel">
+      <div class="auth-card">
+        <div class="auth-mark">
+          <img src="forsa-icon.png" alt="" class="mark-logo" width="30" height="30">
+          Forsa
+        </div>
+
+        <h1 class="auth-title">Vérifie ton email</h1>
+        <p class="auth-subtitle">Nous avons envoyé un code à 6 chiffres à <strong id="email-display"></strong>. Il est valable 15 minutes.</p>
+
+        <form class="auth-form" id="verify-form" novalidate>
+          <div class="auth-field">
+            <label for="code">Code de vérification</label>
+            <input id="code" class="auth-code-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000" required>
+          </div>
+
+          <div id="auth-error" class="auth-error" hidden></div>
+          <div id="auth-info" class="auth-success" hidden></div>
+
+          <button type="submit" class="auth-submit" id="submit-btn">
+            <span class="btn-label">Valider mon compte</span>
+          </button>
+        </form>
+
+        <p class="auth-switch">Pas reçu ? <button type="button" class="auth-link-btn" id="resend-btn">Renvoyer le code</button></p>
+        <p class="auth-switch"><a href="login.html">Retour à la connexion</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="auth.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const email = (params.get("email") || "").trim();
+    if (!email) window.location.replace("signup.html");
+
+    const form = document.getElementById("verify-form");
+    const codeInput = document.getElementById("code");
+    const errorEl = document.getElementById("auth-error");
+    const infoEl = document.getElementById("auth-info");
+    const submitBtn = document.getElementById("submit-btn");
+    const resendBtn = document.getElementById("resend-btn");
+    document.getElementById("email-display").textContent = email;
+
+    function showError(message) { infoEl.hidden = true; errorEl.textContent = message; errorEl.hidden = false; }
+    function showInfo(message) { errorEl.hidden = true; infoEl.textContent = message; infoEl.hidden = false; }
+
+    // Un code vient d'être envoyé (inscription ou connexion) : on attend avant d'autoriser un renvoi.
+    pfStartResendCountdown(resendBtn, 60, "Renvoyer le code");
+
+    codeInput.addEventListener("input", () => {
+      codeInput.value = codeInput.value.replace(/\D/g, "").slice(0, 6);
+    });
+
+    resendBtn.addEventListener("click", async () => {
+      try {
+        await fetch("/api/auth/resend-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+        showInfo("Un nouveau code vient d'être envoyé.");
+      } catch {
+        showError("Impossible de contacter le serveur.");
+      }
+      pfStartResendCountdown(resendBtn, 60, "Renvoyer le code");
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      errorEl.hidden = true;
+      const code = codeInput.value.trim();
+      if (code.length !== 6) {
+        showError("Entre le code à 6 chiffres.");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span class="spinner"></span><span class="btn-label">Vérification…</span>`;
+
+      try {
+        const response = await fetch("/api/auth/verify-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, code }),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(pfErrorMessage(data, "Échec de la vérification."));
+        }
+        pfSaveSession(data.token, data.user);
+        window.location.href = "index.html";
+      } catch (err) {
+        showError(err.message);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<span class="btn-label">Valider mon compte</span>`;
+      }
+    });
+  </script>
+</body>
+</html>

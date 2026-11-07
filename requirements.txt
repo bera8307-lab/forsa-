@@ -1,0 +1,12 @@
+# Dépendances de Forsa (versions reprises de ton ancien requirements.txt)
+fastapi==0.162.0
+starlette==1.10.0
+pydantic==2.14.1
+uvicorn[standard]==0.54.0
+python-dotenv==1.2.4
+python-multipart==0.0.32
+requests==2.34.2
+sse-starlette==3.6.0
+
+# Base de données Postgres (Supabase)
+pg8000>=1.31   # pilote 100 % Python (aucune DLL : rien à bloquer par Windows)
