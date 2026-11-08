@@ -75,6 +75,13 @@ CREATE TABLE IF NOT EXISTS applications (
 );
 CREATE INDEX IF NOT EXISTS idx_applications_user ON applications (user_id);
 
+-- Tickets à usage unique pour la recherche en direct (durée de vie : 60 secondes).
+CREATE TABLE IF NOT EXISTS search_tickets (
+    ticket TEXT PRIMARY KEY,
+    payload TEXT NOT NULL,
+    expires_at DOUBLE PRECISION NOT NULL
+);
+
 -- SÉCURITÉ ------------------------------------------------------------------
 -- Supabase expose automatiquement les tables du schéma « public » via une API
 -- publique utilisable avec la clé « anon » (visible dans le navigateur de n'importe qui).
@@ -87,6 +94,7 @@ ALTER TABLE email_codes  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sessions     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE candidates   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE applications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE search_tickets ENABLE ROW LEVEL SECURITY;
 
 -- Double sécurité : retire aussi les droits des rôles de l'API publique.
-REVOKE ALL ON users, email_codes, sessions, candidates, applications FROM anon, authenticated;
+REVOKE ALL ON users, email_codes, sessions, candidates, applications, search_tickets FROM anon, authenticated;

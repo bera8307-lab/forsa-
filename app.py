@@ -1,8 +1,8 @@
 import json
 import os
 import secrets
-import threading
 import time
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List, Optional, Tuple
 
@@ -17,14 +17,38 @@ from sse_starlette.sse import EventSourceResponse
 import auth
 import documents
 import emails
+from db import get_connection
 
 load_dotenv()
 
 API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
 
+STREAM_TICKET_TTL = 60  # secondes
+
+
+def init_tickets_table() -> None:
+    """Table des tickets de recherche (voir plus bas). Idempotent."""
+    with get_connection() as conn:
+        conn.execute("SELECT pg_advisory_xact_lock(727403)")
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS search_tickets (
+                ticket TEXT PRIMARY KEY,
+                payload TEXT NOT NULL,
+                expires_at DOUBLE PRECISION NOT NULL
+            )
+            """
+        )
+        conn.execute("ALTER TABLE search_tickets ENABLE ROW LEVEL SECURITY")
+
+
 app = FastAPI(title="Forsa API")
-auth.init_db()
-documents.init_db()
+# Sur Vercel, définis SKIP_DB_INIT=1 : les tables existent déjà (créées au premier lancement sur ton PC)
+# et on évite de les vérifier à chaque démarrage à froid d'une fonction.
+if os.getenv("SKIP_DB_INIT") != "1":
+    auth.init_db()
+    documents.init_db()
+    init_tickets_table()
 app.include_router(auth.router)
 app.include_router(documents.router)
 
@@ -155,19 +179,12 @@ def search_places(payload: SearchRequest, current_user: dict = Depends(auth.get_
 # 2) GET /api/search/stream?ticket=... -> flux SSE. Le token de session
 # n'apparaît donc jamais dans l'URL.
 
-STREAM_TICKET_TTL = 60
-_stream_tickets: Dict[str, Tuple[SearchRequest, float]] = {}
-_stream_tickets_lock = threading.Lock()
+# Les tickets vivent dans la base (table search_tickets) et non en mémoire : sur Vercel, la requête qui
+# crée le ticket et celle qui ouvre le flux peuvent tomber sur deux instances différentes du serveur.
 
 
 def _sse(event: str, data: dict) -> dict:
     return {"event": event, "data": json.dumps(data, ensure_ascii=False)}
-
-
-def _purge_tickets() -> None:
-    now = time.time()
-    for key in [k for k, (_, exp) in _stream_tickets.items() if exp < now]:
-        _stream_tickets.pop(key, None)
 
 
 @app.post("/api/search/stream-ticket")
@@ -178,9 +195,13 @@ def create_stream_ticket(payload: SearchRequest, current_user: dict = Depends(au
             detail="Clé API Google Maps manquante côté serveur. Ajoute GOOGLE_MAPS_API_KEY dans le fichier .env.",
         )
     ticket = secrets.token_urlsafe(24)
-    with _stream_tickets_lock:
-        _purge_tickets()
-        _stream_tickets[ticket] = (payload, time.time() + STREAM_TICKET_TTL)
+    now = time.time()
+    with get_connection() as conn:
+        conn.execute("DELETE FROM search_tickets WHERE expires_at < ?", (now,))  # ménage des tickets périmés
+        conn.execute(
+            "INSERT INTO search_tickets (ticket, payload, expires_at) VALUES (?, ?, ?)",
+            (ticket, payload.model_dump_json(), now + STREAM_TICKET_TTL),
+        )
     return {"ticket": ticket}
 
 
@@ -252,12 +273,15 @@ def _stream_search(payload: SearchRequest):
 
 @app.get("/api/search/stream")
 def search_places_stream(ticket: str = Query(...)):
-    with _stream_tickets_lock:
-        _purge_tickets()
-        entry = _stream_tickets.pop(ticket, None)
-    if entry is None:
+    # DELETE ... RETURNING : le ticket est lu ET supprimé en une seule opération (usage unique).
+    with get_connection() as conn:
+        row = conn.execute(
+            "DELETE FROM search_tickets WHERE ticket = ? AND expires_at >= ? RETURNING payload",
+            (ticket, time.time()),
+        ).fetchone()
+    if row is None:
         raise HTTPException(status_code=401, detail="Ticket de recherche invalide ou expiré.")
-    payload, _ = entry
+    payload = SearchRequest.model_validate_json(row["payload"])
     return EventSourceResponse(_stream_search(payload))
 
 
@@ -266,4 +290,8 @@ def health():
     return {"ok": True, "api_key_configured": bool(API_KEY), "email_feature": True}
 
 
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+# Dossier du site : « public » (obligatoire sur Vercel) ou « static » (ancien nom, toujours accepté).
+# Sur Vercel, le dossier public/ est servi directement par son CDN, sans passer par Python.
+_SITE_DIR = next((p for p in (Path(__file__).parent / "public", Path(__file__).parent / "static") if p.is_dir()), None)
+if _SITE_DIR is not None:
+    app.mount("/", StaticFiles(directory=str(_SITE_DIR), html=True), name="static")
